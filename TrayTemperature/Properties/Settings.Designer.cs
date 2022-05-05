@@ -12,7 +12,7 @@ namespace TrayTemperature.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.1.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -26,102 +26,39 @@ namespace TrayTemperature.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("#ffff00")]
-        public string CPUMed {
+        public string MediumColor {
             get {
-                return ((string)(this["CPUMed"]));
+                return ((string)(this["MediumColor"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("#ffffff")]
-        public string CPULow {
+        public string LowColor {
             get {
-                return ((string)(this["CPULow"]));
+                return ((string)(this["LowColor"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("#ff0000")]
-        public string CPUHigh {
+        public string HighColor {
             get {
-                return ((string)(this["CPUHigh"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("65")]
-        public int CPUTempMed {
-            get {
-                return ((int)(this["CPUTempMed"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("80")]
-        public int CPUTempHigh {
-            get {
-                return ((int)(this["CPUTempHigh"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("#ffffff")]
-        public string GPULow {
-            get {
-                return ((string)(this["GPULow"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("#ffff00")]
-        public string GPUMed {
-            get {
-                return ((string)(this["GPUMed"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("#ff0000")]
-        public string GPUHigh {
-            get {
-                return ((string)(this["GPUHigh"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("60")]
-        public int GPUTempMed {
-            get {
-                return ((int)(this["GPUTempMed"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("85")]
-        public int GPUTempHigh {
-            get {
-                return ((int)(this["GPUTempHigh"]));
+                return ((string)(this["HighColor"]));
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool Celsius {
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsFahrenheit {
             get {
-                return ((bool)(this["Celsius"]));
+                return ((bool)(this["IsFahrenheit"]));
             }
             set {
-                this["Celsius"] = value;
+                this["IsFahrenheit"] = value;
             }
         }
         
@@ -134,6 +71,36 @@ namespace TrayTemperature.Properties {
             }
             set {
                 this["Refresh"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("80")]
+        public float HighTemp {
+            get {
+                return ((float)(this["HighTemp"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("65")]
+        public float MediumTemp {
+            get {
+                return ((float)(this["MediumTemp"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000")]
+        public int TemperatureHistoryLength {
+            get {
+                return ((int)(this["TemperatureHistoryLength"]));
+            }
+            set {
+                this["TemperatureHistoryLength"] = value;
             }
         }
     }

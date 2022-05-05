@@ -2,41 +2,29 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TrayTemperature.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="CPUMed" Type="System.String" Scope="Application">
+    <Setting Name="MediumColor" Type="System.String" Scope="Application">
       <Value Profile="(Default)">#ffff00</Value>
     </Setting>
-    <Setting Name="CPULow" Type="System.String" Scope="Application">
+    <Setting Name="LowColor" Type="System.String" Scope="Application">
       <Value Profile="(Default)">#ffffff</Value>
     </Setting>
-    <Setting Name="CPUHigh" Type="System.String" Scope="Application">
+    <Setting Name="HighColor" Type="System.String" Scope="Application">
       <Value Profile="(Default)">#ff0000</Value>
     </Setting>
-    <Setting Name="CPUTempMed" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">65</Value>
-    </Setting>
-    <Setting Name="CPUTempHigh" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">80</Value>
-    </Setting>
-    <Setting Name="GPULow" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">#ffffff</Value>
-    </Setting>
-    <Setting Name="GPUMed" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">#ffff00</Value>
-    </Setting>
-    <Setting Name="GPUHigh" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">#ff0000</Value>
-    </Setting>
-    <Setting Name="GPUTempMed" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">60</Value>
-    </Setting>
-    <Setting Name="GPUTempHigh" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">85</Value>
-    </Setting>
-    <Setting Name="Celsius" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+    <Setting Name="IsFahrenheit" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="Refresh" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="HighTemp" Type="System.Single" Scope="Application">
+      <Value Profile="(Default)">80</Value>
+    </Setting>
+    <Setting Name="MediumTemp" Type="System.Single" Scope="Application">
+      <Value Profile="(Default)">65</Value>
+    </Setting>
+    <Setting Name="TemperatureHistoryLength" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1000</Value>
     </Setting>
   </Settings>
 </SettingsFile>

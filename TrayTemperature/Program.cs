@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.Drawing;
@@ -10,11 +12,19 @@ using OpenHardwareMonitor.Hardware;
 
 namespace TrayTemperature {
 	static class Program {
-		static int CPU = 0, GPU = 0, CPUMax = 0, GPUMax = 0, CPUMin = 99999, GPUMin = 99999;
-		static ulong CPUAcc = 0, GPUAcc = 0, regCount = 0;
+		static Dictionary<HardwareType, Queue<float>> TemperatureReadings = new Dictionary<HardwareType, Queue<float>>();
 		static bool isLogging = false;
+		static readonly string TempUnit = Properties.Settings.Default.IsFahrenheit ? "°F" : "°C";
 
-		static Computer computer = new Computer() { CPUEnabled = true, GPUEnabled = true };
+		static Computer computer = new Computer()
+		{ 
+			CPUEnabled = true, 
+			//GPUEnabled = true, 
+			//FanControllerEnabled = true,
+			HDDEnabled = true,
+			//MainboardEnabled = true,
+			RAMEnabled = true
+		};
 		static Timer tmr;
 		static NotifyIcon ni;
 		static ContextMenu contextMenu;
@@ -41,17 +51,6 @@ namespace TrayTemperature {
 			//Setup context menu
 			contextMenu = new ContextMenu();
 			contextMenu.MenuItems.AddRange(new MenuItem[] {
-				new MenuItem {
-					Text = "TrayTemperature",
-					Enabled = false
-				},
-				new MenuItem {
-					Text = "www.fergonez.net",
-					Enabled = false
-				},
-				new MenuItem {
-					Text = "-",
-				},
 				new MenuItem {
 					Name = "menCel",
 					Text = "Celsius",
@@ -108,7 +107,7 @@ namespace TrayTemperature {
 				menuItem.Click += menuRefresh_Click; ;
 
 			//Check either Celsius or Fahrenheit based on saved settings
-			if (Properties.Settings.Default.Celsius) {
+			if (Properties.Settings.Default.IsFahrenheit) {
 				contextMenu.MenuItems.Find("menCel", false).First().Checked = true;
 				contextMenu.MenuItems.Find("menFah", false).First().Checked = false;
 			} else {
@@ -153,13 +152,13 @@ namespace TrayTemperature {
 		private static void menu_Click(object sender, EventArgs e) {
 			switch (((MenuItem)sender).Name) {
 				case "menCel":
-					Properties.Settings.Default.Celsius = true;
+					Properties.Settings.Default.IsFahrenheit = true;
 
 					contextMenu.MenuItems.Find("menCel", false).First().Checked = true;
 					contextMenu.MenuItems.Find("menFah", false).First().Checked = false;
 					break;
 				case "menFah":
-					Properties.Settings.Default.Celsius = false;
+					Properties.Settings.Default.IsFahrenheit = false;
 
 					contextMenu.MenuItems.Find("menCel", false).First().Checked = false;
 					contextMenu.MenuItems.Find("menFah", false).First().Checked = true;
@@ -168,7 +167,7 @@ namespace TrayTemperature {
 					Application.Exit();
 					break;
 				case "menReset":
-					CPUMax = 0; GPUMax = 0; CPUAcc = 0; GPUAcc = 0; regCount = 0; CPUMin = 99999; GPUMin = 99999;
+					TemperatureReadings.Clear();
 					break;
 				case "menLog":
 					if (!isLogging) {
@@ -179,8 +178,7 @@ namespace TrayTemperature {
 						sw = new StreamWriter(string.Format("temp.log", DateTime.Now), false);
 						sw.WriteLine("DateTime,CPU Temperature,GPU Temperature");
 
-						//Reset all statistics
-						CPUMax = 0; GPUMax = 0;	CPUAcc = 0; GPUAcc = 0; regCount = 0; CPUMin = 99999; GPUMin = 99999;
+						TemperatureReadings.Clear();
 
 						isLogging = true;
 
@@ -195,8 +193,11 @@ namespace TrayTemperature {
 						//Create the summary table
 						StringBuilder sb = new StringBuilder();
 						sb.AppendLine("Hardware,Average,Minimum,Maximum");
-						sb.AppendLine(string.Format("CPU,{0:F2},{1},{2}", (float)CPUAcc / regCount, CPUMin, CPUMax));
-						sb.AppendLine(string.Format("GPU,{0:F2},{1},{2}", (float)GPUAcc / regCount, GPUMin, GPUMax));
+						foreach (var key in TemperatureReadings.Keys)
+						{
+							var queue = TemperatureReadings[key];
+							sb.AppendLine($"{key},{queue.Average():F2},{queue.Min():F2},{queue.Max():F2}");
+						}
 						sb.AppendLine("");
 
 						//Append the summary table with the temp timeseries and remove the temp log
@@ -223,78 +224,69 @@ namespace TrayTemperature {
 		//Updates the temperatures
 		private static void tmr_tick(object sender, EventArgs e) {
 
+			Dictionary<HardwareType, Color> hardwareColors = new Dictionary<HardwareType, Color>();
+			Dictionary<HardwareType, float> readings = new Dictionary<HardwareType, float>();
+			List<(string, Color)> iconDatapoints = new List<(string, Color)>();
 			//Updates the sensors on each hardware part
-			foreach (IHardware hardware in computer.Hardware) {
+			foreach (IHardware hardware in computer.Hardware)
+			{
 				hardware.Update();
 
-				//Get all temperature censors
+				// Read (converted) temperature
+				if (!TemperatureReadings.TryGetValue(hardware.HardwareType, out Queue<float> queue))
+					queue = TemperatureReadings[hardware.HardwareType] = new Queue<float>();
 				ISensor sensor = hardware.Sensors.FirstOrDefault(d => d.SensorType == SensorType.Temperature);
+				if (sensor?.Value == null)
+					continue;
+				float temp;
+				if (Properties.Settings.Default.IsFahrenheit)
+					temp = sensor.Value.Value * 1.8f + 32.0f;
+				else
+					temp = sensor.Value.Value;
 
-				if (sensor != null) {
-					if (hardware.HardwareType == HardwareType.CPU)
-						CPU = Convert.ToInt32(sensor.Value);
-					else
-						GPU = Convert.ToInt32(sensor.Value);
-				}
+				// Update the temp records
+				queue.Enqueue(temp);
+				while (queue.Count > Properties.Settings.Default.TemperatureHistoryLength)
+					queue.Dequeue();
+				readings[sensor.Hardware.HardwareType] = temp;
+
+				// Determine temp color
+				if (temp >= Properties.Settings.Default.HighTemp)
+					hardwareColors[sensor.Hardware.HardwareType] = ColorTranslator.FromHtml(Properties.Settings.Default.HighColor);
+				else if (temp >= Properties.Settings.Default.MediumTemp)
+					hardwareColors[sensor.Hardware.HardwareType] = ColorTranslator.FromHtml(Properties.Settings.Default.MediumColor);
+				else
+					hardwareColors[sensor.Hardware.HardwareType] = ColorTranslator.FromHtml(Properties.Settings.Default.LowColor);
+
+				var iconText = $"{readings[sensor.Hardware.HardwareType]:F0}{TempUnit}";
+				var iconColor = hardwareColors[sensor.Hardware.HardwareType];
+				iconDatapoints.Add((iconText, iconColor));
 			}
-
-			//Select appropriate color based on settings
-			Color cpuColor, gpuColor;
-
-			if (CPU >= Properties.Settings.Default.CPUTempHigh)
-				cpuColor = ColorTranslator.FromHtml(Properties.Settings.Default.CPUHigh);
-			else if (CPU >= Properties.Settings.Default.CPUTempMed)
-				cpuColor = ColorTranslator.FromHtml(Properties.Settings.Default.CPUMed);
-			else
-				cpuColor = ColorTranslator.FromHtml(Properties.Settings.Default.CPULow);
-
-			if (GPU >= Properties.Settings.Default.GPUTempHigh)
-				gpuColor = ColorTranslator.FromHtml(Properties.Settings.Default.GPUHigh);
-			else if (GPU >= Properties.Settings.Default.GPUTempMed)
-				gpuColor = ColorTranslator.FromHtml(Properties.Settings.Default.GPUMed);
-			else
-				gpuColor = ColorTranslator.FromHtml(Properties.Settings.Default.GPULow);
-
-			//Unit conversion for loggin and displaying
-			int convertedCPU = Convert.ToInt32(Properties.Settings.Default.Celsius ? CPU : CPU * 1.8 + 32);
-			int convertedGPU = Convert.ToInt32(Properties.Settings.Default.Celsius ? GPU : GPU * 1.8 + 32);
-			string tempUnit = Properties.Settings.Default.Celsius ? "°C" : "°F";
-
-			//Calculate statistics. CPUAcc and GPUAcc will eventually overflow after around 5.8 billion years with 1s updates, so I guess there's no worry there...
-			CPUAcc += (ulong)convertedCPU;
-			GPUAcc += (ulong)convertedGPU;
-			regCount++;
-
-			if (CPU > CPUMax)
-				CPUMax = CPU;
-			if (CPU < CPUMin)
-				CPUMin = CPU;
-			if (GPU > GPUMax)
-				GPUMax = GPU;
-			if (GPU < GPUMin)
-				GPUMin = GPU;
 
 			//Appends a new line to the current log file (CSV format)
 			if (isLogging && sw != null)
-				sw.WriteLine(DateTime.Now.ToString() + "," + convertedCPU + "," + convertedGPU);
+            {
+				List<string> csvFields = new List<string> { DateTime.Now.ToString() };
+				foreach(var key in TemperatureReadings.Keys)
+                {
+					var lastValue = TemperatureReadings[key].Last();
+					csvFields.Add(lastValue.ToString("0.00"));
+                }
+				sw.WriteLine(string.Join(",", csvFields));
+
+			}
 
 			//Updates the tooltip with the little hacky function
 			StringBuilder sb = new StringBuilder();
-			sb.AppendLine("CPU");
-			sb.AppendLine($"  Cur: {convertedCPU}{tempUnit}");
-			sb.AppendLine($"  Avg: {(float)CPUAcc / regCount:F2}{tempUnit}");
-			sb.AppendLine($"  Min: {CPUMin}{tempUnit}");
-			sb.AppendLine($"  Max: {CPUMax}{tempUnit}");
-			sb.AppendLine("GPU");
-			sb.AppendLine($"  Cur: {convertedGPU}{tempUnit}");
-			sb.AppendLine($"  Avg: {(float)GPUAcc / regCount:F2}{tempUnit}");
-			sb.AppendLine($"  Min: {GPUMin}{tempUnit}");
-			sb.AppendLine($"  Max: {GPUMax}{tempUnit}");
+			foreach(var key in readings.Keys)
+            {
+				var queue = TemperatureReadings[key];
+				sb.AppendLine(key.ToString());
+				sb.AppendLine($" {queue.Average():F1}{TempUnit} ~ [{queue.Min():F0},{queue.Max():F0}]");
+            }
 
 			SetNotifyIconText(ni, sb.ToString());
-
-			//Updates the icon
-			ni.Icon = DynamicIcon.CreateIcon(convertedCPU.ToString() + tempUnit, cpuColor, convertedGPU.ToString() + tempUnit, gpuColor);
+			ni.Icon = DynamicIcon.CreateIcon(iconDatapoints);
 		}
 
 		//Little hack to bypass the 63 char limit of the WinForms tooltip (still limited to the 127 chars of regular Win32 control)
